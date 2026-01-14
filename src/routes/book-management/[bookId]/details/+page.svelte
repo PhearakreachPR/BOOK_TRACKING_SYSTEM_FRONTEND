@@ -4,6 +4,7 @@
 
   interface BookMovement {
     id: number;
+    barcode: string;
     type: "Borrowed" | "Returned" | "Moved" | "Added" | "Damaged";
     date: string;
     from: string;
@@ -20,11 +21,18 @@
     isbn: string;
     category: string;
     currentLocation: string;
-    status: "Borrowed" | "Available" | "Damaged" | "Lost";
+    status: "Unavailable" | "Available";
     dateAdded: string;
   }
 
+  interface BookCopy {
+    barcode: string;
+    location: string;
+    status: "Unavailable" | "Available";
+  }
+
   let bookId = parseInt($page.params.bookId ?? "0");
+  let selectedBarcode = "";
 
   // Sample book data
   const booksData: Record<number, Book> = {
@@ -36,7 +44,7 @@
       isbn: "9780141439518",
       category: "Romance",
       currentLocation: "Borrowed",
-      status: "Borrowed",
+      status: "Unavailable",
       dateAdded: "1/15/2024"
     },
     2: {
@@ -63,11 +71,31 @@
     }
   };
 
+  // Book copies with their locations and status
+  const bookCopies: Record<number, BookCopy[]> = {
+    1: [
+      { barcode: "9780141439518-1", location: "Borrowed", status: "Unavailable" },
+      { barcode: "9780141439518-2", location: "Shelf A-20", status: "Available" },
+      { barcode: "9780141439518-3", location: "Shelf A-20", status: "Available" },
+      { barcode: "9780141439518-4", location: "On table A-6", status: "Unavailable" },
+      { barcode: "9780141439518-5", location: "Shelf A-20", status: "Available" }
+    ],
+    2: [
+      { barcode: "978-0-06-112008-4-1", location: "Shelf A-15", status: "Available" },
+      { barcode: "978-0-06-112008-4-2", location: "Shelf A-15", status: "Available" }
+    ],
+    3: [
+      { barcode: "978-0-7432-7356-5-1", location: "on table A1", status: "Available" },
+      { barcode: "978-0-7432-7356-5-2", location: "Borrowed", status: "Unavailable" }
+    ]
+  };
+
   // Sample movement history
   const movementHistory: Record<number, BookMovement[]> = {
     1: [
       {
         id: 1,
+        barcode: "9780141439518-1",
         type: "Borrowed",
         date: "12/18/2025",
         from: "Shelf",
@@ -77,6 +105,7 @@
       },
       {
         id: 2,
+        barcode: "9780141439518-1",
         type: "Returned",
         date: "12/10/2025",
         from: "User: Maria Garcia",
@@ -85,6 +114,7 @@
       },
       {
         id: 3,
+        barcode: "9780141439518-2",
         type: "Borrowed",
         date: "11/28/2025",
         from: "Shelf A-20",
@@ -94,6 +124,7 @@
       },
       {
         id: 4,
+        barcode: "9780141439518-3",
         type: "Moved",
         date: "11/15/2025",
         from: "Shelf A-15",
@@ -102,6 +133,16 @@
       },
       {
         id: 5,
+        barcode: "9780141439518-4",
+        type: "Added",
+        date: "1/15/2024",
+        from: "System",
+        to: "Shelf A-15",
+        notes: "New acquisition"
+      },
+      {
+        id: 6,
+        barcode: "9780141439518-5",
         type: "Added",
         date: "1/15/2024",
         from: "System",
@@ -112,6 +153,7 @@
     2: [
       {
         id: 1,
+        barcode: "978-0-06-112008-4-1",
         type: "Added",
         date: "2/10/2024",
         from: "System",
@@ -122,6 +164,7 @@
     3: [
       {
         id: 1,
+        barcode: "978-0-7432-7356-5-1",
         type: "Borrowed",
         date: "12/15/2025",
         from: "Shelf A-12",
@@ -131,6 +174,7 @@
       },
       {
         id: 2,
+        barcode: "978-0-7432-7356-5-1",
         type: "Returned",
         date: "12/05/2025",
         from: "User: Robert Wilson",
@@ -139,6 +183,16 @@
       },
       {
         id: 3,
+        barcode: "978-0-7432-7356-5-1",
+        type: "Added",
+        date: "1/05/2024",
+        from: "System",
+        to: "Shelf A-12",
+        notes: "Library purchase"
+      },
+      {
+        id: 4,
+        barcode: "978-0-7432-7356-5-2",
         type: "Added",
         date: "1/05/2024",
         from: "System",
@@ -149,7 +203,12 @@
   };
 
   const book = booksData[bookId];
-  const movements = movementHistory[bookId] || [];
+  const copies = bookCopies[bookId] || [];
+  const allMovements = movementHistory[bookId] || [];
+
+  $: selectedCopy = copies.find(c => c.barcode === selectedBarcode) || copies[0];
+  $: if (!selectedBarcode && copies.length > 0) selectedBarcode = copies[0].barcode;
+  $: filteredMovements = allMovements.filter(m => m.barcode === selectedBarcode);
 
   function getStatusBadgeColor(status: string) {
     switch (status) {
@@ -211,18 +270,18 @@
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
-      Back
+      Back to Books
     </a>
   </div>
 
   {#if book}
     <!-- Book Details Card -->
-    <div class="bg-gradient-to-r from-orange-400 to-orange-500 rounded-lg p-6 text-white flex items-center justify-between">
+    <div class="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 rounded-2xl p-8 text-white flex items-center justify-between shadow-lg mb-8">
       <div>
-        <h1 class="text-3xl font-bold">{book.title}</h1>
-        <p class="text-orange-100 mt-1">Complete information</p>
+        <h1 class="text-4xl font-bold leading-tight">{book.title}</h1>
+        <p class="text-orange-100 mt-2 text-lg">by {book.author}</p>
       </div>
-      <div class="text-6xl">📖</div>
+      <div class="text-8xl opacity-80">📖</div>
     </div>
 
     <!-- Main Details Section -->
@@ -257,14 +316,18 @@
 
             <hr class="border-gray-200" />
 
-            <!-- Barcode -->
+            <!-- Barcode Selection -->
             <div class="flex items-start gap-4">
               <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100">
                 <span class="text-lg">📊</span>
               </div>
               <div class="flex-1">
                 <p class="text-sm font-semibold text-gray-600 uppercase">Barcode</p>
-                <p class="text-lg font-mono font-bold text-gray-900">{book.barcode}</p>
+                <select bind:value={selectedBarcode} class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                  {#each copies as copy}
+                    <option value={copy.barcode}>{copy.barcode}</option>
+                  {/each}
+                </select>
               </div>
             </div>
 
@@ -283,20 +346,7 @@
 
             <hr class="border-gray-200" />
 
-            <!-- Current Location -->
-            <div class="flex items-start gap-4">
-              <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100">
-                <span class="text-lg">📍</span>
-              </div>
-              <div class="flex-1">
-                <p class="text-sm font-semibold text-gray-600 uppercase">Current Location</p>
-                <p class="text-lg font-bold text-gray-900">{book.currentLocation}</p>
-              </div>
-            </div>
-
-            <hr class="border-gray-200" />
-
-            <!-- Date Added -->
+            <!-- ISBN -->
             <div class="flex items-start gap-4">
               <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100">
                 <span class="text-lg">📅</span>
@@ -328,24 +378,31 @@
       <!-- Right Column - Status -->
       <div>
         <Card title="">
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <h3 class="text-lg font-bold text-gray-800">Status</h3>
-              <span class={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusBadgeColor(book.status)}`}>
-                {book.status}
+          <div class="bg-gradient-to-br from-orange-50 via-yellow-50 to-orange-50 rounded-2xl p-6 space-y-6 border border-orange-100">
+            <div>
+              <h3 class="text-2xl font-bold bg-gradient-to-r from-orange-600 to-yellow-600 bg-clip-text text-transparent">Copy Details</h3>
+            </div>
+
+            <!-- Current Location -->
+            <div class="bg-white rounded-xl p-4 border-l-4 border-orange-500 shadow-sm">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Current Location</p>
+              <p class="text-2xl font-bold text-gray-900">📍 {selectedCopy?.location || "N/A"}</p>
+            </div>
+
+            <!-- Status -->
+            <div class="bg-white rounded-xl p-4 border-l-4 border-blue-500 shadow-sm">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Copy Status</p>
+              <span class={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getStatusBadgeColor(selectedCopy?.status || "Available")}`}>
+                {selectedCopy?.status || "N/A"}
               </span>
             </div>
-            <p class="text-sm text-gray-600">
-              {#if book.status === "Borrowed"}
-                This book is currently borrowed and will be returned to the library soon.
-              {:else if book.status === "Available"}
-                This book is available for borrowing.
-              {:else if book.status === "Damaged"}
-                This book is damaged and not available for borrowing.
-              {:else}
-                Status unknown
-              {/if}
-            </p>
+
+            <!-- Stock Info -->
+            <!-- <div class="bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl p-6 text-white shadow-lg text-center">
+              <p class="text-xs font-bold text-orange-100 uppercase tracking-wide mb-2">Total Copies</p>
+              <div class="text-5xl font-bold mb-2">{copies.length}</div>
+              <p class="text-orange-100 font-medium">Available in Stock</p>
+            </div> -->
           </div>
         </Card>
       </div>
@@ -365,7 +422,7 @@
         </div>
 
         <div class="space-y-4">
-          {#each movements as movement (movement.id)}
+          {#each filteredMovements as movement (movement.id)}
             <div class={`p-4 rounded-lg ${getMovementTypeColor(movement.type)}`}>
               <div class="flex items-start gap-4">
                 <div class="flex-shrink-0 text-3xl">
@@ -394,9 +451,9 @@
             </div>
           {/each}
 
-          {#if movements.length === 0}
+          {#if filteredMovements.length === 0}
             <div class="py-8 text-center">
-              <p class="text-gray-500 text-lg">No movement history available</p>
+              <p class="text-gray-500 text-lg">No movement history for this copy</p>
             </div>
           {/if}
         </div>

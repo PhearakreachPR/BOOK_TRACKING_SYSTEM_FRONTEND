@@ -305,7 +305,7 @@
               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             />
           </div>
-          <div>
+          <!-- <div>
             <label for="formShelf" class="block text-sm font-semibold text-gray-700 mb-2">Shelf Location</label>
             <input
               id="formShelf"
@@ -314,7 +314,7 @@
               placeholder="Enter shelf location (e.g., A-1)..."
               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             />
-          </div>
+          </div> -->
         </div>
 
         <div class="flex gap-2 pt-4 border-t">
@@ -360,7 +360,7 @@
               <th class="px-4 py-3">ISBN</th>
               <th class="px-4 py-3">Year</th>
               <th class="px-4 py-3">Stock</th>
-              <th class="px-4 py-3">Shelf</th>
+              <!-- <th class="px-4 py-3">Shelf</th> -->
               <th class="px-4 py-3">Actions</th>
             </tr>
           </thead>
@@ -380,7 +380,7 @@
                     {book.stock} copies
                   </span>
                 </td>
-                <td class="px-4 py-3 text-gray-700 font-mono text-xs">{book.shelf}</td>
+                <!-- <td class="px-4 py-3 text-gray-700 font-mono text-xs">{book.shelf}</td> -->
                 <td class="px-4 py-3">
                   <div class="flex gap-2">
                     <button

@@ -176,14 +176,14 @@
             <label class="block text-sm font-semibold text-gray-700 mb-2">User ID or Name</label>
             <input
               type="text"
-              placeholder="Search user..."
+              placeholder="Enter user name..."
               bind:value={issuedUser}
               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Book ISBN or Title</label>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Book Call number</label>
             <input
               type="text"
               placeholder="Search book..."
@@ -229,7 +229,7 @@
         <!-- Return Form -->
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Search User</label>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Search User or Book call number</label>
             <input
               type="text"
               placeholder="Enter user name or ID..."

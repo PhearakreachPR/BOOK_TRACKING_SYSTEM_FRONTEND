@@ -31,6 +31,18 @@
         User Management
       </a>
     </li>
+    <li class="hover:bg-blue-700 rounded-lg px-4 py-2.5 flex items-center gap-3 cursor-pointer transition {$page.url.pathname === '/table-management' ? 'bg-orange-500' : ''}">
+      <a href="/table-management" class="flex items-center gap-3 w-full">
+        <span class="text-lg">🪑</span>
+        Table Management
+      </a>
+    </li>
+    <li class="hover:bg-blue-700 rounded-lg px-4 py-2.5 flex items-center gap-3 cursor-pointer transition {$page.url.pathname === '/shelf-management' ? 'bg-orange-500' : ''}">
+      <a href="/shelf-management" class="flex items-center gap-3 w-full">
+        <span class="text-lg">📚</span>
+        Shelf Management
+      </a>
+    </li>
     <li class="hover:bg-blue-700 rounded-lg px-4 py-2.5 flex items-center gap-3 cursor-pointer transition {$page.url.pathname === '/borrow-return' ? 'bg-orange-500' : ''}">
       <a href="/borrow-return" class="flex items-center gap-3 w-full">
         <span class="text-lg">🔄</span>

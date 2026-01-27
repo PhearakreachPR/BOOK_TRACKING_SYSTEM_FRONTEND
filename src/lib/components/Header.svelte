@@ -6,7 +6,7 @@
   }
 </script>
 
-<header class="bg-linear-to-r from-blue-600 to-blue-700 text-white px-8 py-4 flex items-center justify-between shadow-lg">
+<header class="bg-linear-to-r from-blue-600 to-blue-700 text-white px-8 py-4 flex items-center justify-between shadow-lg sticky top-0 left-0 right-0 z-10">
   <div class="flex items-center gap-3">
     <div class="text-3xl">📚</div>
     <h1 class="text-xl font-semibold">Welcome to ITC Library</h1>

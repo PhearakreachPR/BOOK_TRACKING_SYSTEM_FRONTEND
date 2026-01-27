@@ -1,9 +1,22 @@
 <script>
   import { page } from '$app/stores';
+  
+  export let onClose = () => {};
 </script>
 
-<nav class="w-full h-full bg-[#243c6a] text-white flex flex-col">
-  <div class="p-2 font-bold text-lg flex items-center gap-1">
+<nav class="w-full h-full bg-[#243c6a] text-white flex flex-col ">
+  <div class="p-4 font-bold text-lg flex items-center justify-between gap-1">
+    <span>Menu</span>
+    <button
+      on:click={onClose}
+      class="text-xl hover:bg-orange-500 rounded p-2 transition"
+      aria-label="Close sidebar"
+      title="Close menu"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
   </div>
 
   <ul class="flex-1 space-y-2 px-4">

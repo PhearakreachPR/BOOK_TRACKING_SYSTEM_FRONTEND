@@ -1,14 +1,62 @@
 <script>
+  import { goto } from '$app/navigation';
   import Profile from "./Auth/Profile.svelte";
 
   let isDarkMode = false;
+
+  let user = {
+    name: 'Admin User',
+    email: 'admin@library.com',
+    role: 'ADMIN',
+    initials: 'AU'
+  };
+
+  function handleLogout() {
+    console.log('User logged out');
+    // Clear auth state
+    localStorage.removeItem('authToken');
+    // Redirect to login
+    window.location.href = '/auth';
+  }
+
+    /**
+   * @param {{ detail: any; }} event
+   */
+  //   function handleNavigate(event) {
+  //   const destination = event.detail;
+  //   console.log('Navigate to:', destination);
+    
+  //   if (destination === 'changePassword') {
+  //     window.location.href = '/auth/change-password';
+  //   } else if (destination === 'profile') {
+  //     window.location.href = '/profile';
+  //   } else if (destination === 'settings') {
+  //     window.location.href = '/settings';
+  //   }
+  // }
+
+    function handleNavigate(event) {
+    const destination = event.detail;
+
+    if (destination === 'profile') {
+      goto('/profile');
+    }
+
+    if (destination === 'changePassword') {
+      goto('/change-password');
+    }
+
+    if (destination === 'settings') {
+      goto('/settings'); // optional, create later
+    }
+  }
 
   function toggleTheme() {
     isDarkMode = !isDarkMode;
   }
 </script>
 
-<header class="bg-linear-to-r from-blue-600 to-blue-700 text-white px-8 py-4 flex items-center justify-between shadow-lg">
+<header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 flex items-center justify-between shadow-lg">
   <div class="flex items-center gap-3">
     <div class="text-3xl">📚</div>
     <h1 class="text-xl font-semibold">Welcome to ITC Library</h1>
@@ -31,6 +79,10 @@
     </button>
 
     <!-- User Profile -->
-    <Profile />
+    <Profile 
+      {user}  
+      on:logout={handleLogout}
+      on:navigate={handleNavigate}
+    />
   </div>
 </header>

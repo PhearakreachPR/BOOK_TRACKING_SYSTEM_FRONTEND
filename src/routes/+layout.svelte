@@ -1,7 +1,14 @@
 <script>
   import Sidebar from "$lib/components/Sidebar.svelte";
   import Header from "$lib/components/Header.svelte";
+  import { onMount } from 'svelte';
+  import { authStore } from '$lib/stores/authStore';
   import "../app.css";
+
+  onMount(async () => {
+    // Initialize authentication state when app loads
+    await authStore.init();
+  });
 </script>
 
 <div class="min-h-screen bg-gray-100 flex flex-col">

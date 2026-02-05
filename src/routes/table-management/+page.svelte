@@ -1,10 +1,12 @@
 <script lang="ts">
   import Card from "$lib/components/Card.svelte";
   import { goto } from "$app/navigation";
+  import QRCode from "qrcode";
 
   let showAddModal = false;
   let showEditModal = false;
   let editingTable: any = null;
+  let isAddingTable = false;
   let newTable = {
     tableNumber: ""
   };
@@ -14,31 +16,37 @@
       id: 1,
       tableNumber: "T-001",
       status: "Available",
+      qrCode: ""
     },
     {
       id: 2,
       tableNumber: "T-002",
       status: "Available",
+      qrCode: ""
     },
     {
       id: 3,
       tableNumber: "T-003",
       status: "Occupied",
+      qrCode: ""
     },
     {
       id: 4,
       tableNumber: "T-004",
       status: "Available",
+      qrCode: ""
     },
     {
       id: 5,
       tableNumber: "T-005",
       status: "Occupied",
+      qrCode: ""
     },
     {
       id: 6,
       tableNumber: "T-006",
       status: "Available",
+      qrCode: ""
     }
   ];
 
@@ -59,19 +67,36 @@
   }
 
   function addTable() {
-    if (
-      newTable.tableNumber 
-    ) {
-      tables = [
-        ...tables,
-        {
-          id: Math.max(...tables.map(t => t.id), 0) + 1,
-          ...newTable,
-          status: "Available",
-    
-        }
-      ];
-      closeAddModal();
+    if (newTable.tableNumber) {
+      isAddingTable = true;
+      const newId = Math.max(...tables.map(t => t.id), 0) + 1;
+      const qrData = `TABLE-${newId}-${newTable.tableNumber}`;
+      
+      // Generate QR code
+      QRCode.toDataURL(qrData, {
+        errorCorrectionLevel: "H",
+        type: "image/png",
+        margin: 1,
+        width: 300
+      }).then((qrCodeUrl: string) => {
+        tables = [
+          ...tables,
+          {
+            id: newId,
+            ...newTable,
+            status: "Available",
+            qrCode: qrCodeUrl
+          }
+        ];
+        isAddingTable = false;
+        closeAddModal();
+      }).catch((error) => {
+        console.error("Error generating QR code:", error);
+        isAddingTable = false;
+        alert("Error creating table. Please try again.");
+      });
+    } else {
+      alert("Please enter a table number");
     }
   }
 
@@ -239,13 +264,15 @@
       <div class="flex gap-3">
         <button
           on:click={addTable}
-          class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+          disabled={isAddingTable}
+          class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition"
         >
-          Add Table
+          {isAddingTable ? "Adding..." : "Add Table"}
         </button>
         <button
           on:click={closeAddModal}
-          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-medium transition"
+          disabled={isAddingTable}
+          class="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition"
         >
           Cancel
         </button>

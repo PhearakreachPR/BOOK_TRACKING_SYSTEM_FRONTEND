@@ -1,10 +1,12 @@
 <script lang="ts">
   import Card from "$lib/components/Card.svelte";
   import { goto } from "$app/navigation";
+  import QRCode from "qrcode";
 
   let showAddModal = false;
   let showEditModal = false;
   let editingShelf: any = null;
+  let isAddingShelf = false;
   let newShelf = {
     shelfCode: "",
     location: "",
@@ -20,7 +22,8 @@
       category: "Fiction",
       capacity: 50,
       booksCount: 45,
-      lastAuditDate: "2026-01-10"
+      lastAuditDate: "2026-01-10",
+      qrCode: ""
     },
     {
       id: 2,
@@ -29,7 +32,8 @@
       category: "Non-Fiction",
       capacity: 50,
       booksCount: 48,
-      lastAuditDate: "2026-01-08"
+      lastAuditDate: "2026-01-08",
+      qrCode: ""
     },
     {
       id: 3,
@@ -38,7 +42,8 @@
       category: "Reference",
       capacity: 40,
       booksCount: 38,
-      lastAuditDate: "2026-01-12"
+      lastAuditDate: "2026-01-12",
+      qrCode: ""
     },
     {
       id: 4,
@@ -47,7 +52,8 @@
       category: "Science",
       capacity: 50,
       booksCount: 42,
-      lastAuditDate: "2026-01-05"
+      lastAuditDate: "2026-01-05",
+      qrCode: ""
     },
     {
       id: 5,
@@ -56,7 +62,8 @@
       category: "History",
       capacity: 50,
       booksCount: 50,
-      lastAuditDate: "2026-01-11"
+      lastAuditDate: "2026-01-11",
+      qrCode: ""
     },
     {
       id: 6,
@@ -65,7 +72,8 @@
       category: "Technology",
       capacity: 45,
       booksCount: 25,
-      lastAuditDate: "2026-01-03"
+      lastAuditDate: "2026-01-03",
+      qrCode: ""
     }
   ];
 
@@ -94,16 +102,36 @@
       newShelf.location &&
       newShelf.capacity > 0
     ) {
-      shelves = [
-        ...shelves,
-        {
-          id: Math.max(...shelves.map(s => s.id), 0) + 1,
-          ...newShelf,
-          booksCount: 0,
-          lastAuditDate: new Date().toISOString().split('T')[0]
-        }
-      ];
-      closeAddModal();
+      isAddingShelf = true;
+      const newId = Math.max(...shelves.map(s => s.id), 0) + 1;
+      const qrData = `SHELF-${newId}-${newShelf.shelfCode}`;
+      
+      // Generate QR code
+      QRCode.toDataURL(qrData, {
+        errorCorrectionLevel: "H",
+        type: "image/png",
+        margin: 1,
+        width: 300
+      }).then((qrCodeUrl: string) => {
+        shelves = [
+          ...shelves,
+          {
+            id: newId,
+            ...newShelf,
+            booksCount: 0,
+            lastAuditDate: new Date().toISOString().split('T')[0],
+            qrCode: qrCodeUrl
+          }
+        ];
+        isAddingShelf = false;
+        closeAddModal();
+      }).catch((error) => {
+        console.error("Error generating QR code:", error);
+        isAddingShelf = false;
+        alert("Error creating shelf. Please try again.");
+      });
+    } else {
+      alert("Please fill in all required fields");
     }
   }
 
@@ -364,13 +392,15 @@
       <div class="flex gap-3">
         <button
           on:click={addShelf}
-          class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+          disabled={isAddingShelf}
+          class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition"
         >
-          Add Shelf
+          {isAddingShelf ? "Adding..." : "Add Shelf"}
         </button>
         <button
           on:click={closeAddModal}
-          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-medium transition"
+          disabled={isAddingShelf}
+          class="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition"
         >
           Cancel
         </button>

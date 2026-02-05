@@ -2,6 +2,7 @@
   import Card from "$lib/components/Card.svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import QRCode from "qrcode";
 
   let shelf = {
     id: parseInt($page.params.shelfId || "0"),
@@ -14,8 +15,22 @@
     condition: "Good",
     lastAuditDate: "2026-01-10",
     nextAuditDate: "2026-02-10",
-    notes: "Main fiction section"
+    notes: "Main fiction section",
+    qrCode: ""
   };
+
+  // Generate QR code on mount
+  $: if (shelf.id && !shelf.qrCode) {
+    const qrData = `SHELF-${shelf.id}-${shelf.shelfCode}`;
+    QRCode.toDataURL(qrData, {
+      errorCorrectionLevel: "H",
+      type: "image/png",
+      margin: 1,
+      width: 300
+    }).then((qrCodeUrl: string) => {
+      shelf.qrCode = qrCodeUrl;
+    });
+  }
 
   let books = [
     {
@@ -77,6 +92,17 @@
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  }
+
+  function downloadQRCode() {
+    if (shelf.qrCode) {
+      const link = document.createElement("a");
+      link.href = shelf.qrCode;
+      link.download = `shelf-${shelf.shelfCode}-qrcode.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   }
 
@@ -160,7 +186,29 @@
         </div>
       </Card>
 
-      <!-- Books on Shelf -->
+      <!-- QR Code Section -->
+      <Card title="">
+        <div class="p-6">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">QR Code</h2>
+          <div class="flex flex-col items-center gap-4">
+            {#if shelf.qrCode}
+              <img src={shelf.qrCode} alt="Shelf QR Code" class="w-64 h-64 border-2 border-gray-200 rounded-lg p-2" />
+              <div class="flex gap-3 justify-center">
+                <button
+                  on:click={downloadQRCode}
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+                >
+                  ↓ Download QR Code
+                </button>
+              </div>
+            {:else}
+              <div class="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                <p class="text-gray-500">Generating QR Code...</p>
+              </div>
+            {/if}
+          </div>
+        </div>
+      </Card>
       <Card title="">
         <div class="p-6">
           <h2 class="text-xl font-bold text-gray-800 mb-4">Books Stored ({shelf.booksCount})</h2>
@@ -198,29 +246,6 @@
           </div>
         </div>
       </Card>
-
-      <!-- Maintenance History -->
-      <Card title="">
-        <div class="p-6">
-          <h2 class="text-xl font-bold text-gray-800 mb-4">Maintenance History</h2>
-          <div class="space-y-3">
-            {#each maintenanceHistory as record (record.id)}
-              <div class="border-l-4 border-blue-500 pl-4 py-2">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <p class="font-semibold text-gray-800">{record.type}</p>
-                    <p class="text-sm text-gray-600">{record.description}</p>
-                  </div>
-                  <span class="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-                    {record.status}
-                  </span>
-                </div>
-                <p class="text-xs text-gray-500 mt-1">{record.date}</p>
-              </div>
-            {/each}
-          </div>
-        </div>
-      </Card>
     </div>
 
     <!-- Right Column -->
@@ -244,48 +269,6 @@
                 style="width: {(shelf.booksCount / shelf.capacity) * 100}%"
               ></div>
             </div>
-          </div>
-        </div>
-      </Card>
-
-      <!-- Audit Information -->
-      <Card title="">
-        <div class="p-6">
-          <h2 class="text-lg font-bold text-gray-800 mb-4">Audit Schedule</h2>
-          <div class="space-y-3">
-            <div>
-              <p class="text-xs text-gray-500 font-medium uppercase mb-1">
-                Last Audit
-              </p>
-              <p class="font-semibold text-gray-800">{shelf.lastAuditDate}</p>
-            </div>
-            <div>
-              <p class="text-xs text-gray-500 font-medium uppercase mb-1">
-                Next Audit
-              </p>
-              <p class="font-semibold text-gray-800">{shelf.nextAuditDate}</p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      <!-- Quick Actions -->
-      <Card title="">
-        <div class="p-6">
-          <h2 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h2>
-          <div class="space-y-2">
-            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
-              Add Books
-            </button>
-            <button class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition">
-              Audit Shelf
-            </button>
-            <button class="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition">
-              Request Maintenance
-            </button>
-            <button class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition">
-              Deactivate Shelf
-            </button>
           </div>
         </div>
       </Card>

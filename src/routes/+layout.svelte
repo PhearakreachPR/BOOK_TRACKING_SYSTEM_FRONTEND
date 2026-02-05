@@ -12,7 +12,7 @@
     { href: "/category-management", icon: "📋", label: "Category" },
     { href: "/user-management", icon: "👥", label: "Users" },
     { href: "/table-management", icon: "🪑", label: "Tables" },
-    { href: "/shelf-management", icon: "📚", label: "Shelves" },
+    { href: "/shelf-management", icon: "🚪", label: "Shelves" },
     { href: "/borrow-return", icon: "🔄", label: "Borrow/Return" },
     { href: "/fines", icon: "💰", label: "Fines" },
     { href: "/settings", icon: "⚙️", label: "Settings" }

@@ -11,7 +11,8 @@
     isbn: "",
     category: "Fiction",
     shelf: "",
-    stock: 0
+    stock: 0,
+    image: ""
   };
 
   let books = [
@@ -23,7 +24,8 @@
       category: "Fiction",
       shelf: "A-12",
       stock: 5,
-      status: "Available"
+      status: "Available",
+      image: ""
     },
     {
       id: 2,
@@ -33,7 +35,8 @@
       category: "Fiction",
       shelf: "A-15",
       stock: 3,
-      status: "Available"
+      status: "Available",
+      image: ""
     },
     {
       id: 3,
@@ -43,7 +46,8 @@
       category: "Fiction",
       shelf: "B-08",
       stock: 2,
-      status: "Unavailable"
+      status: "Unavailable",
+      image: ""
     },
     {
       id: 4,
@@ -53,7 +57,8 @@
       category: "Non-Fiction",
       shelf: "C-22",
       stock: 8,
-      status: "Available"
+      status: "Available",
+      image: ""
     },
     {
       id: 5,
@@ -63,7 +68,8 @@
       category: "Philosophy",
       shelf: "D-11",
       stock: 6,
-      status: "Unavailable"
+      status: "Unavailable",
+      image: ""
     },
     {
       id: 6,
@@ -73,7 +79,8 @@
       category: "Technology",
       shelf: "E-05",
       stock: 4,
-      status: "Available"
+      status: "Available",
+      image: ""
     }
   ];
 
@@ -101,8 +108,30 @@
     return colors[category as keyof typeof colors] || "bg-gray-100 text-gray-800";
   }
 
+  function handleImageUpload(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        newBook.image = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function handleEditImageUpload(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        editingBook.image = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   function handleAddBook() {
-    if (!newBook.title || !newBook.author || !newBook.isbn || !newBook.shelf) {
+    if (!newBook.title || !newBook.author || !newBook.isbn) {
       alert("Please fill in all required fields");
       return;
     }
@@ -121,7 +150,8 @@
       isbn: "",
       category: "Fiction",
       shelf: "",
-      stock: 0
+      stock: 0,
+      image: ""
     };
   }
 
@@ -133,7 +163,8 @@
       isbn: "",
       category: "Fiction",
       shelf: "",
-      stock: 0
+      stock: 0,
+      image: ""
     };
   }
 
@@ -143,7 +174,7 @@
   }
 
   function handleUpdateBook() {
-    if (!editingBook.title || !editingBook.author || !editingBook.isbn || !editingBook.shelf) {
+    if (!editingBook.title || !editingBook.author || !editingBook.isbn) {
       alert("Please fill in all required fields");
       return;
     }
@@ -226,8 +257,12 @@
             <tr class="hover:bg-gray-50 transition">
               <td class="px-4 py-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded bg-orange-100 flex items-center justify-center text-orange-600 font-semibold">
-                    📖
+                  <div class="w-10 h-10 rounded bg-orange-100 flex items-center justify-center text-orange-600 font-semibold overflow-hidden">
+                    {#if book.image}
+                      <img src={book.image} alt={book.title} class="w-full h-full object-cover" />
+                    {:else}
+                      📖
+                    {/if}
                   </div>
                   <div>
                     <p class="font-medium text-gray-900">{book.title}</p>
@@ -286,17 +321,19 @@
 <!-- Add Book Modal -->
 {#if showAddModal}
   <div class="fixed inset-0 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-    <div class="absolute inset-0" on:click={closeModal}></div>
-    <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md relative">
-      <button on:click={closeModal} class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+    <div class="absolute inset-0" role="button" tabindex="0" on:click={closeModal} on:keydown={(e) => { if (e.key === 'Escape') closeModal(); }}></div>
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md relative flex flex-col max-h-[90vh]">
+      <button on:click={closeModal} aria-label="Close modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
       
-      <h2 class="text-2xl font-bold text-gray-900 mb-6">Add New Book</h2>
+      <div class="px-8 pt-8 pb-0">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Add New Book</h2>
+      </div>
       
-      <form on:submit|preventDefault={handleAddBook} class="space-y-5">
+      <form on:submit|preventDefault={handleAddBook} class="space-y-5 px-8 overflow-y-auto flex-1">
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-2">Book Title <span class="text-red-500">*</span></label>
           <input
@@ -365,7 +402,37 @@
           />
         </div>
 
-        <div class="flex gap-3 pt-6">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Book Cover Image</label>
+          <div class="flex flex-col gap-3">
+            {#if newBook.image}
+              <div class="relative w-full">
+                <img src={newBook.image} alt="Book cover preview" class="w-full h-48 object-cover rounded-lg border border-gray-300" />
+                <button
+                  type="button"
+                  aria-label="Remove image"
+                  on:click={() => newBook.image = ""}
+                  class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            {:else}
+              <label class="w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-orange-500 transition">
+                <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="text-sm font-medium text-gray-700">Click to upload or drag and drop</span>
+                <span class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</span>
+                <input type="file" accept="image/*" on:change={handleImageUpload} class="hidden" />
+              </label>
+            {/if}
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-6 px-8 pb-8 bg-white border-t border-gray-200 sticky bottom-0">
           <button
             type="submit"
             class="flex-1 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold text-base"
@@ -388,17 +455,19 @@
 <!-- Edit Book Modal -->
 {#if showEditModal && editingBook}
   <div class="fixed inset-0 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-    <div class="absolute inset-0" on:click={closeEditModal}></div>
-    <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md relative">
-      <button on:click={closeEditModal} class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+    <div class="absolute inset-0" role="button" tabindex="0" on:click={closeEditModal} on:keydown={(e) => { if (e.key === 'Escape') closeEditModal(); }}></div>
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md relative flex flex-col max-h-[90vh]">
+      <button on:click={closeEditModal} aria-label="Close modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
       
-      <h2 class="text-2xl font-bold text-gray-900 mb-6">Edit Book</h2>
+      <div class="px-8 pt-8 pb-0">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Edit Book</h2>
+      </div>
       
-      <form on:submit|preventDefault={handleUpdateBook} class="space-y-5">
+      <form on:submit|preventDefault={handleUpdateBook} class="space-y-5 px-8 overflow-y-auto flex-1">
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-2">Book Title <span class="text-red-500">*</span></label>
           <input
@@ -467,7 +536,37 @@
           />
         </div>
 
-        <div class="flex gap-3 pt-6">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Book Cover Image</label>
+          <div class="flex flex-col gap-3">
+            {#if editingBook.image}
+              <div class="relative w-full">
+                <img src={editingBook.image} alt="Book cover preview" class="w-full h-48 object-cover rounded-lg border border-gray-300" />
+                <button
+                  type="button"
+                  aria-label="Remove image"
+                  on:click={() => editingBook.image = ""}
+                  class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            {:else}
+              <label class="w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-orange-500 transition">
+                <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="text-sm font-medium text-gray-700">Click to upload or drag and drop</span>
+                <span class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</span>
+                <input type="file" accept="image/*" on:change={handleEditImageUpload} class="hidden" />
+              </label>
+            {/if}
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-6 px-8 pb-8 bg-white border-t border-gray-200 sticky bottom-0">
           <button
             type="submit"
             class="flex-1 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold text-base"

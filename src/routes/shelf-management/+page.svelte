@@ -2,11 +2,13 @@
   import Card from "$lib/components/Card.svelte";
   import { goto } from "$app/navigation";
   import QRCode from "qrcode";
+  import { shelvesStore } from "$lib/stores/shelfStore";
 
   let showAddModal = false;
   let showEditModal = false;
   let editingShelf: any = null;
   let isAddingShelf = false;
+  let generateQRShelf = true;
   let newShelf = {
     shelfCode: "",
     location: "",
@@ -14,68 +16,7 @@
     category: "General"
   };
 
-  let shelves = [
-    {
-      id: 1,
-      shelfCode: "S-001",
-      location: "Ground Floor",
-      category: "Fiction",
-      capacity: 50,
-      booksCount: 45,
-      lastAuditDate: "2026-01-10",
-      qrCode: ""
-    },
-    {
-      id: 2,
-      shelfCode: "S-002",
-      location: "Ground Floor",
-      category: "Non-Fiction",
-      capacity: 50,
-      booksCount: 48,
-      lastAuditDate: "2026-01-08",
-      qrCode: ""
-    },
-    {
-      id: 3,
-      shelfCode: "S-003",
-      location: "Ground Floor",
-      category: "Reference",
-      capacity: 40,
-      booksCount: 38,
-      lastAuditDate: "2026-01-12",
-      qrCode: ""
-    },
-    {
-      id: 4,
-      shelfCode: "S-004",
-      location: "First Floor",
-      category: "Science",
-      capacity: 50,
-      booksCount: 42,
-      lastAuditDate: "2026-01-05",
-      qrCode: ""
-    },
-    {
-      id: 5,
-      shelfCode: "S-005",
-      location: "First Floor",
-      category: "History",
-      capacity: 50,
-      booksCount: 50,
-      lastAuditDate: "2026-01-11",
-      qrCode: ""
-    },
-    {
-      id: 6,
-      shelfCode: "S-006",
-      location: "Second Floor",
-      category: "Technology",
-      capacity: 45,
-      booksCount: 25,
-      lastAuditDate: "2026-01-03",
-      qrCode: ""
-    }
-  ];
+  $: shelves = $shelvesStore;
 
   function openAddModal() {
     newShelf = {
@@ -84,6 +25,7 @@
       capacity: 0,
       category: "General"
     };
+    generateQRShelf = true;
     showAddModal = true;
   }
 
@@ -103,33 +45,56 @@
       newShelf.capacity > 0
     ) {
       isAddingShelf = true;
-      const newId = Math.max(...shelves.map(s => s.id), 0) + 1;
-      const qrData = `SHELF-${newId}-${newShelf.shelfCode}`;
-      
-      // Generate QR code
-      QRCode.toDataURL(qrData, {
-        errorCorrectionLevel: "H",
-        type: "image/png",
-        margin: 1,
-        width: 300
-      }).then((qrCodeUrl: string) => {
-        shelves = [
-          ...shelves,
+      const currentShelves = $shelvesStore;
+      const newId = Math.max(...currentShelves.map(s => s.id), 0) + 1;
+
+      if (generateQRShelf) {
+        const qrData = `SHELF-${newId}-${newShelf.shelfCode}`;
+        
+        // Generate QR code
+        QRCode.toDataURL(qrData, {
+          errorCorrectionLevel: "H",
+          type: "image/png",
+          margin: 1,
+          width: 300
+        }).then((qrCodeUrl: string) => {
+          shelvesStore.update(s => [
+            ...s,
+            {
+              id: newId,
+              shelfCode: newShelf.shelfCode,
+              location: newShelf.location,
+              capacity: newShelf.capacity,
+              category: newShelf.category,
+              booksCount: 0,
+              lastAuditDate: new Date().toISOString().split('T')[0],
+              qrCode: qrCodeUrl
+            }
+          ]);
+          isAddingShelf = false;
+          closeAddModal();
+        }).catch((error) => {
+          console.error("Error generating QR code:", error);
+          isAddingShelf = false;
+          alert("Error creating shelf. Please try again.");
+        });
+      } else {
+        shelvesStore.update(s => [
+          ...s,
           {
             id: newId,
-            ...newShelf,
+            shelfCode: newShelf.shelfCode,
+            location: newShelf.location,
+            capacity: newShelf.capacity,
+            category: newShelf.category,
             booksCount: 0,
             lastAuditDate: new Date().toISOString().split('T')[0],
-            qrCode: qrCodeUrl
+            qrCode: ""
           }
-        ];
+        ]);
         isAddingShelf = false;
         closeAddModal();
-      }).catch((error) => {
-        console.error("Error generating QR code:", error);
-        isAddingShelf = false;
-        alert("Error creating shelf. Please try again.");
-      });
+      }
     } else {
       alert("Please fill in all required fields");
     }
@@ -142,8 +107,10 @@
 
   function saveEdit() {
     if (editingShelf) {
-      shelves = shelves.map(s =>
-        s.id === editingShelf.id ? editingShelf : s
+      shelvesStore.update(s =>
+        s.map(shelf =>
+          shelf.id === editingShelf.id ? editingShelf : shelf
+        )
       );
       closeEditModal();
     }
@@ -151,7 +118,7 @@
 
   function deleteShelf(id: number) {
     if (confirm("Are you sure you want to delete this shelf?")) {
-      shelves = shelves.filter(s => s.id !== id);
+      shelvesStore.update(s => s.filter(shelf => shelf.id !== id));
     }
   }
 
@@ -386,6 +353,18 @@
             <option>Technology</option>
             <option>General</option>
           </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            id="addGenerateQR"
+            type="checkbox"
+            bind:checked={generateQRShelf}
+            class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          />
+          <label for="addGenerateQR" class="text-sm font-medium text-gray-700">
+            Generate QR Code
+          </label>
         </div>
       </div>
 

@@ -3,34 +3,25 @@
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import QRCode from "qrcode";
+  import { shelvesStore } from "$lib/stores/shelfStore";
 
-  let shelf = {
-    id: parseInt($page.params.shelfId || "0"),
-    shelfCode: "S-001",
+  $: shelfId = parseInt($page.params.shelfId || "0");
+  $: shelfData = $shelvesStore.find(s => s.id === shelfId);
+
+  $: shelf = {
+    id: shelfId,
+    shelfCode: shelfData?.shelfCode || "Unknown",
     section: "A",
-    location: "Ground Floor",
-    category: "Fiction",
-    capacity: 50,
-    booksCount: 45,
+    location: shelfData?.location || "Unknown",
+    category: shelfData?.category || "General",
+    capacity: shelfData?.capacity || 50,
+    booksCount: shelfData?.booksCount || 0,
     condition: "Good",
-    lastAuditDate: "2026-01-10",
+    lastAuditDate: shelfData?.lastAuditDate || "2026-01-10",
     nextAuditDate: "2026-02-10",
-    notes: "Main fiction section",
-    qrCode: ""
+    notes: "Main section",
+    qrCode: shelfData?.qrCode || ""
   };
-
-  // Generate QR code on mount
-  $: if (shelf.id && !shelf.qrCode) {
-    const qrData = `SHELF-${shelf.id}-${shelf.shelfCode}`;
-    QRCode.toDataURL(qrData, {
-      errorCorrectionLevel: "H",
-      type: "image/png",
-      margin: 1,
-      width: 300
-    }).then((qrCodeUrl: string) => {
-      shelf.qrCode = qrCodeUrl;
-    });
-  }
 
   let books = [
     {
@@ -187,11 +178,11 @@
       </Card>
 
       <!-- QR Code Section -->
-      <Card title="">
-        <div class="p-6">
-          <h2 class="text-xl font-bold text-gray-800 mb-4">QR Code</h2>
-          <div class="flex flex-col items-center gap-4">
-            {#if shelf.qrCode}
+      {#if shelf.qrCode}
+        <Card title="">
+          <div class="p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">QR Code</h2>
+            <div class="flex flex-col items-center gap-4">
               <img src={shelf.qrCode} alt="Shelf QR Code" class="w-64 h-64 border-2 border-gray-200 rounded-lg p-2" />
               <div class="flex gap-3 justify-center">
                 <button
@@ -201,14 +192,10 @@
                   ↓ Download QR Code
                 </button>
               </div>
-            {:else}
-              <div class="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                <p class="text-gray-500">Generating QR Code...</p>
-              </div>
-            {/if}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      {/if}
       <Card title="">
         <div class="p-6">
           <h2 class="text-xl font-bold text-gray-800 mb-4">Books Stored ({shelf.booksCount})</h2>

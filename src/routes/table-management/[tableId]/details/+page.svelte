@@ -3,33 +3,24 @@
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import QRCode from "qrcode";
+  import { tablesStore } from "$lib/stores/tableStore";
 
-  let table = {
-    id: parseInt($page.params.tableId || "0"),
-    tableNumber: "T-001",
+  $: tableId = parseInt($page.params.tableId || "0");
+  $: tableData = $tablesStore.find(t => t.id === tableId);
+
+  $: table = {
+    id: tableId,
+    tableNumber: tableData?.tableNumber || "Unknown",
     capacity: 4,
     location: "Ground Floor - Section A",
     type: "Study",
-    status: "Available",
+    status: tableData?.status || "Available",
     currentUsers: 0,
     notes: "Near the main entrance",
     lastMaintenanceDate: "2026-01-10",
     nextMaintenanceDate: "2026-02-10",
-    qrCode: ""
+    qrCode: tableData?.qrCode || ""
   };
-
-  // Generate QR code on mount
-  $: if (table.id && !table.qrCode) {
-    const qrData = `TABLE-${table.id}-${table.tableNumber}`;
-    QRCode.toDataURL(qrData, {
-      errorCorrectionLevel: "H",
-      type: "image/png",
-      margin: 1,
-      width: 300
-    }).then((qrCodeUrl: string) => {
-      table.qrCode = qrCodeUrl;
-    });
-  }
 
   let bookingHistory = [
     {
@@ -112,11 +103,11 @@
       </Card>
 
       <!-- QR Code Section -->
-      <Card title="">
-        <div class="p-6">
-          <h2 class="text-xl font-bold text-gray-800 mb-4">QR Code</h2>
-          <div class="flex flex-col items-center gap-4">
-            {#if table.qrCode}
+      {#if table.qrCode}
+        <Card title="">
+          <div class="p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">QR Code</h2>
+            <div class="flex flex-col items-center gap-4">
               <img src={table.qrCode} alt="Table QR Code" class="w-64 h-64 border-2 border-gray-200 rounded-lg p-2" />
               <div class="flex gap-3 justify-center">
                 <button
@@ -126,14 +117,10 @@
                   ↓ Download QR Code
                 </button>
               </div>
-            {:else}
-              <div class="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                <p class="text-gray-500">Generating QR Code...</p>
-              </div>
-            {/if}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      {/if}
 
       <!-- Booking History -->
       <Card title="">

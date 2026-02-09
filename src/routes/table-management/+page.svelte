@@ -2,58 +2,24 @@
   import Card from "$lib/components/Card.svelte";
   import { goto } from "$app/navigation";
   import QRCode from "qrcode";
+  import { tablesStore } from "$lib/stores/tableStore";
 
   let showAddModal = false;
   let showEditModal = false;
   let editingTable: any = null;
   let isAddingTable = false;
+  let generateQRTable = true;
   let newTable = {
     tableNumber: ""
   };
 
-  let tables = [
-    {
-      id: 1,
-      tableNumber: "T-001",
-      status: "Available",
-      qrCode: ""
-    },
-    {
-      id: 2,
-      tableNumber: "T-002",
-      status: "Available",
-      qrCode: ""
-    },
-    {
-      id: 3,
-      tableNumber: "T-003",
-      status: "Occupied",
-      qrCode: ""
-    },
-    {
-      id: 4,
-      tableNumber: "T-004",
-      status: "Available",
-      qrCode: ""
-    },
-    {
-      id: 5,
-      tableNumber: "T-005",
-      status: "Occupied",
-      qrCode: ""
-    },
-    {
-      id: 6,
-      tableNumber: "T-006",
-      status: "Available",
-      qrCode: ""
-    }
-  ];
+  $: tables = $tablesStore;
 
   function openAddModal() {
     newTable = {
       tableNumber: ""
     };
+    generateQRTable = true;
     showAddModal = true;
   }
 
@@ -69,32 +35,48 @@
   function addTable() {
     if (newTable.tableNumber) {
       isAddingTable = true;
-      const newId = Math.max(...tables.map(t => t.id), 0) + 1;
-      const qrData = `TABLE-${newId}-${newTable.tableNumber}`;
-      
-      // Generate QR code
-      QRCode.toDataURL(qrData, {
-        errorCorrectionLevel: "H",
-        type: "image/png",
-        margin: 1,
-        width: 300
-      }).then((qrCodeUrl: string) => {
-        tables = [
-          ...tables,
+      const currentTables = $tablesStore;
+      const newId = Math.max(...currentTables.map(t => t.id), 0) + 1;
+
+      if (generateQRTable) {
+        const qrData = `TABLE-${newId}-${newTable.tableNumber}`;
+        
+        // Generate QR code
+        QRCode.toDataURL(qrData, {
+          errorCorrectionLevel: "H",
+          type: "image/png",
+          margin: 1,
+          width: 300
+        }).then((qrCodeUrl: string) => {
+          tablesStore.update(t => [
+            ...t,
+            {
+              id: newId,
+              tableNumber: newTable.tableNumber,
+              status: "Available",
+              qrCode: qrCodeUrl
+            }
+          ]);
+          isAddingTable = false;
+          closeAddModal();
+        }).catch((error) => {
+          console.error("Error generating QR code:", error);
+          isAddingTable = false;
+          alert("Error creating table. Please try again.");
+        });
+      } else {
+        tablesStore.update(t => [
+          ...t,
           {
             id: newId,
-            ...newTable,
+            tableNumber: newTable.tableNumber,
             status: "Available",
-            qrCode: qrCodeUrl
+            qrCode: ""
           }
-        ];
+        ]);
         isAddingTable = false;
         closeAddModal();
-      }).catch((error) => {
-        console.error("Error generating QR code:", error);
-        isAddingTable = false;
-        alert("Error creating table. Please try again.");
-      });
+      }
     } else {
       alert("Please enter a table number");
     }
@@ -107,8 +89,10 @@
 
   function saveEdit() {
     if (editingTable) {
-      tables = tables.map(t =>
-        t.id === editingTable.id ? editingTable : t
+      tablesStore.update(t =>
+        t.map(table =>
+          table.id === editingTable.id ? editingTable : table
+        )
       );
       closeEditModal();
     }
@@ -116,7 +100,7 @@
 
   function deleteTable(id: number) {
     if (confirm("Are you sure you want to delete this table?")) {
-      tables = tables.filter(t => t.id !== id);
+      tablesStore.update(t => t.filter(table => table.id !== id));
     }
   }
 
@@ -258,6 +242,18 @@
             placeholder="e.g., T-007"
             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            id="addGenerateQR"
+            type="checkbox"
+            bind:checked={generateQRTable}
+            class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          />
+          <label for="addGenerateQR" class="text-sm font-medium text-gray-700">
+            Generate QR Code
+          </label>
         </div>
       </div>
 

@@ -2,19 +2,24 @@
   import Card from "$lib/components/Card.svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import QRCode from "qrcode";
+  import { tablesStore } from "$lib/stores/tableStore";
 
-  let table = {
-    id: parseInt($page.params.tableId || "0"),
-    tableNumber: "T-001",
+  $: tableId = parseInt($page.params.tableId || "0");
+  $: tableData = $tablesStore.find(t => t.id === tableId);
+
+  $: table = {
+    id: tableId,
+    tableNumber: tableData?.tableNumber || "Unknown",
     capacity: 4,
     location: "Ground Floor - Section A",
     type: "Study",
-    status: "Available",
+    status: tableData?.status || "Available",
     currentUsers: 0,
     notes: "Near the main entrance",
-    amenities: ["Power outlets", "USB charging ports"],
     lastMaintenanceDate: "2026-01-10",
-    nextMaintenanceDate: "2026-02-10"
+    nextMaintenanceDate: "2026-02-10",
+    qrCode: tableData?.qrCode || ""
   };
 
   let bookingHistory = [
@@ -52,6 +57,17 @@
         return "bg-blue-100 text-blue-800";
     }
   }
+
+  function downloadQRCode() {
+    if (table.qrCode) {
+      const link = document.createElement("a");
+      link.href = table.qrCode;
+      link.download = `table-${table.tableNumber}-qrcode.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
 </script>
 
 <div class="space-y-6">
@@ -86,19 +102,25 @@
         </div>
       </Card>
 
-      <!-- Amenities -->
-      <Card title="">
-        <div class="p-6">
-          <h2 class="text-xl font-bold text-gray-800 mb-4">Amenities</h2>
-          <div class="flex flex-wrap gap-2">
-            {#each table.amenities as amenity}
-              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                ✓ {amenity}
-              </span>
-            {/each}
+      <!-- QR Code Section -->
+      {#if table.qrCode}
+        <Card title="">
+          <div class="p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">QR Code</h2>
+            <div class="flex flex-col items-center gap-4">
+              <img src={table.qrCode} alt="Table QR Code" class="w-64 h-64 border-2 border-gray-200 rounded-lg p-2" />
+              <div class="flex gap-3 justify-center">
+                <button
+                  on:click={downloadQRCode}
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+                >
+                  ↓ Download QR Code
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      {/if}
 
       <!-- Booking History -->
       <Card title="">

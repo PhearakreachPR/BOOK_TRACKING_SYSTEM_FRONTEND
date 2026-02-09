@@ -1,51 +1,25 @@
 <script lang="ts">
   import Card from "$lib/components/Card.svelte";
   import { goto } from "$app/navigation";
+  import QRCode from "qrcode";
+  import { tablesStore } from "$lib/stores/tableStore";
 
   let showAddModal = false;
   let showEditModal = false;
   let editingTable: any = null;
+  let isAddingTable = false;
+  let generateQRTable = true;
   let newTable = {
     tableNumber: ""
   };
 
-  let tables = [
-    {
-      id: 1,
-      tableNumber: "T-001",
-      status: "Available",
-    },
-    {
-      id: 2,
-      tableNumber: "T-002",
-      status: "Available",
-    },
-    {
-      id: 3,
-      tableNumber: "T-003",
-      status: "Occupied",
-    },
-    {
-      id: 4,
-      tableNumber: "T-004",
-      status: "Available",
-    },
-    {
-      id: 5,
-      tableNumber: "T-005",
-      status: "Occupied",
-    },
-    {
-      id: 6,
-      tableNumber: "T-006",
-      status: "Available",
-    }
-  ];
+  $: tables = $tablesStore;
 
   function openAddModal() {
     newTable = {
       tableNumber: ""
     };
+    generateQRTable = true;
     showAddModal = true;
   }
 
@@ -59,19 +33,52 @@
   }
 
   function addTable() {
-    if (
-      newTable.tableNumber 
-    ) {
-      tables = [
-        ...tables,
-        {
-          id: Math.max(...tables.map(t => t.id), 0) + 1,
-          ...newTable,
-          status: "Available",
-    
-        }
-      ];
-      closeAddModal();
+    if (newTable.tableNumber) {
+      isAddingTable = true;
+      const currentTables = $tablesStore;
+      const newId = Math.max(...currentTables.map(t => t.id), 0) + 1;
+
+      if (generateQRTable) {
+        const qrData = `TABLE-${newId}-${newTable.tableNumber}`;
+        
+        // Generate QR code
+        QRCode.toDataURL(qrData, {
+          errorCorrectionLevel: "H",
+          type: "image/png",
+          margin: 1,
+          width: 300
+        }).then((qrCodeUrl: string) => {
+          tablesStore.update(t => [
+            ...t,
+            {
+              id: newId,
+              tableNumber: newTable.tableNumber,
+              status: "Available",
+              qrCode: qrCodeUrl
+            }
+          ]);
+          isAddingTable = false;
+          closeAddModal();
+        }).catch((error) => {
+          console.error("Error generating QR code:", error);
+          isAddingTable = false;
+          alert("Error creating table. Please try again.");
+        });
+      } else {
+        tablesStore.update(t => [
+          ...t,
+          {
+            id: newId,
+            tableNumber: newTable.tableNumber,
+            status: "Available",
+            qrCode: ""
+          }
+        ]);
+        isAddingTable = false;
+        closeAddModal();
+      }
+    } else {
+      alert("Please enter a table number");
     }
   }
 
@@ -82,8 +89,10 @@
 
   function saveEdit() {
     if (editingTable) {
-      tables = tables.map(t =>
-        t.id === editingTable.id ? editingTable : t
+      tablesStore.update(t =>
+        t.map(table =>
+          table.id === editingTable.id ? editingTable : table
+        )
       );
       closeEditModal();
     }
@@ -91,7 +100,7 @@
 
   function deleteTable(id: number) {
     if (confirm("Are you sure you want to delete this table?")) {
-      tables = tables.filter(t => t.id !== id);
+      tablesStore.update(t => t.filter(table => table.id !== id));
     }
   }
 
@@ -234,18 +243,32 @@
             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            id="addGenerateQR"
+            type="checkbox"
+            bind:checked={generateQRTable}
+            class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          />
+          <label for="addGenerateQR" class="text-sm font-medium text-gray-700">
+            Generate QR Code
+          </label>
+        </div>
       </div>
 
       <div class="flex gap-3">
         <button
           on:click={addTable}
-          class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+          disabled={isAddingTable}
+          class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition"
         >
-          Add Table
+          {isAddingTable ? "Adding..." : "Add Table"}
         </button>
         <button
           on:click={closeAddModal}
-          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-medium transition"
+          disabled={isAddingTable}
+          class="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition"
         >
           Cancel
         </button>

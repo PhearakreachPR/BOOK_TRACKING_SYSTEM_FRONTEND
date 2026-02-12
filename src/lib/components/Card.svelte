@@ -1,11 +1,14 @@
-<script>
-  export let title;
+<script lang="ts">
+  export let title = '';
 </script>
 
-<div class="bg-white rounded-lg p-6 shadow-sm">
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
   {#if title}
-    <h3 class="font-semibold text-lg mb-4 text-gray-800">{title}</h3>
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-xl font-bold text-gray-900">{title}</h2>
+    </div>
   {/if}
-  <slot />
+  <div class="p-6">
+    <slot />
+  </div>
 </div>
-

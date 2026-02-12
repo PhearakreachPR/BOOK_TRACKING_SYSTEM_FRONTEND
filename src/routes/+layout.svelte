@@ -1,30 +1,41 @@
 <script>
-  import Sidebar from "$lib/components/Sidebar.svelte";
-  import Header from "$lib/components/Header.svelte";
+// @ts-nocheck
+
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import { authStore } from '$lib/stores/authStore';
   import "../app.css";
 
+  let isInitialized = false;
+
+  // Initialize auth when app loads
   onMount(async () => {
-    // Initialize authentication state when app loads
+    console.log(' Initializing authentication...');
     await authStore.init();
+    isInitialized = true;
+    console.log(' Authentication initialized');
   });
+
+  // Show loading state while initializing
+  $: isLoading = $authStore.isLoading || !isInitialized;
 </script>
 
-<div class="min-h-screen bg-gray-100 flex flex-col">
-  <!-- Header -->
-  <Header />
-
-  <!-- Main container with sidebar fixed and content scrollable -->
-  <div class="flex flex-1 overflow-hidden">
-    <!-- Sidebar - fixed, no scroll -->
-    <div class="w-64 bg-[#243c6a] overflow-y-auto">
-      <Sidebar />
+{#if isLoading}
+  <!-- Loading Screen -->
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+      <p class="text-gray-600 text-lg font-medium">Loading...</p>
     </div>
-
-    <!-- Main content - scrollable independently -->
-    <main class="flex-1 overflow-y-auto p-8">
-      <slot />
-    </main>
   </div>
-</div>
+{:else}
+  <!-- Main App Content -->
+  <slot />
+{/if}
+
+<style>
+  :global(body) {
+    margin: 0;
+    padding: 0;
+  }
+</style>
